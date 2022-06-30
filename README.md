@@ -16,7 +16,7 @@ func main() {
 func onReady() {
 	systray.SetIcon(icon.Data)
 	systray.SetTitle("Awesome App")
-	systray.SetTooltip("Pretty awesome超级棒")
+	systray.SetTooltip("Pretty awesome")
 	mQuit := systray.AddMenuItem("Quit", "Quit the whole app")
 
 	// Sets the icon of a menu item. Only available on Mac and Windows.
@@ -49,23 +49,6 @@ On Windows, you should build like this:
 env GO111MODULE=on go build -ldflags "-H=windowsgui"
 ```
 
-The following text will then appear on the console:
-
-
-```sh
-go: finding github.com/skratchdot/open-golang latest
-go: finding github.com/getlantern/systray latest
-go: finding github.com/getlantern/golog latest
-```
-
-Now look for *Awesome App* in your menu bar!
-
-![Awesome App screenshot](example/screenshot.png)
-
-## The Webview example
-
-The code under `webview_example` is to demostrate how it can co-exist with other UI elements. Note that the example doesn't work on macOS versions older than 10.15 Catalina.
-
 ## Platform notes
 
 ### Linux
@@ -84,8 +67,6 @@ when building. For example:
 ```
 go build -tags=legacy_appindicator
 ```
-
-To build `webview_example`, you also need to install `libwebkit2gtk-4.0-dev` and remove `webview_example/rsrc.syso` which is required on Windows.
 
 ### Windows
 
