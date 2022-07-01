@@ -13,7 +13,7 @@ import (
 var (
 	systrayReady = func() {}
 	systrayExit  = func() {}
-	menuItems    sync.Map // map[uint32]*MenuItem
+	menuItems    sync.Map // map[uint32]*menuItem
 
 	currentID = uint32(0)
 	quitOnce  sync.Once
@@ -23,9 +23,8 @@ func init() {
 	runtime.LockOSThread()
 }
 
-// MenuItem is used to keep track each menu item of systray.
-// Don't create it directly, use the one systray.AddMenuItem() returned
-type MenuItem struct {
+// menuItem is used to keep track each menu item of systray.
+type menuItem struct {
 	// onClicked is the callback function which will be called when the menu item is clicked
 	onClicked func()
 
@@ -42,14 +41,14 @@ type MenuItem struct {
 	// has the menu item a checkbox (Linux)
 	isCheckable bool
 	// parent item, for sub menus
-	parent *MenuItem
+	parent *menuItem
 }
 
-func (item *MenuItem) String() string {
+func (item *menuItem) String() string {
 	if item.parent == nil {
-		return fmt.Sprintf("MenuItem[%d, %q]", item.id, item.title)
+		return fmt.Sprintf("menuItem[%d, %q]", item.id, item.title)
 	}
-	return fmt.Sprintf("MenuItem[%d, parent %d, %q]", item.id, item.parent.id, item.title)
+	return fmt.Sprintf("menuItem[%d, parent %d, %q]", item.id, item.parent.id, item.title)
 }
 
 // Run initializes GUI and starts the event loop, then invokes the onReady
@@ -85,52 +84,52 @@ func Quit() {
 	quitOnce.Do(quit)
 }
 
-type MenuItemOption func(item *MenuItem)
+type MenuItemOption func(item *menuItem)
 
-// WithTooltip sets the tooltip for MenuItem
+// WithTooltip sets the tooltip for menuItem
 func WithTooltip(tooltip string) MenuItemOption {
-	return func(item *MenuItem) {
+	return func(item *menuItem) {
 		item.tooltip = tooltip
 	}
 }
 
-// WithCheckable sets the MenuItem to be checkable with initial value checked.
-// MenuItem is checkable on Windows and OSX by default. This option is required
-// for Linux to have a checkable MenuItem.
+// WithCheckable sets the menuItem to be checkable with initial value checked.
+// menuItem is checkable on Windows and OSX by default. This option is required
+// for Linux to have a checkable menuItem.
 func WithCheckable(checked bool) MenuItemOption {
-	return func(item *MenuItem) {
+	return func(item *menuItem) {
 		item.isCheckable = true
 		item.checked = checked
 	}
 }
 
-// WithParent sets the parent for MenuItem to be created
-func WithParent(parent *MenuItem) MenuItemOption {
-	return func(item *MenuItem) {
+// WithParent sets the parent for menuItem to be created
+func WithParent(parent *menuItem) MenuItemOption {
+	return func(item *menuItem) {
 		item.parent = parent
 	}
 }
 
-// WithDisable disables the MenuItem to be created. MenuItem is enabled by
+// WithDisable disables the menuItem to be created. menuItem is enabled by
 // default.
 func WithDisabled() MenuItemOption {
-	return func(item *MenuItem) {
+	return func(item *menuItem) {
 		item.disabled = true
 	}
 }
 
-// WithOnClickedFunc sets the callback function to call when a MenuItem is
+// WithOnClickedFunc sets the callback function to call when a menuItem is
 // clicked.
 func WithOnClickedFunc(callback func()) MenuItemOption {
-	return func(item *MenuItem) {
+	return func(item *menuItem) {
 		item.onClicked = callback
 	}
 }
 
 // NewMenuItem adds a menu item with the designated title and tooltip.
 // It can be safely invoked from different goroutines.
-func NewMenuItem(title string, opts ...MenuItemOption) *MenuItem {
-	item := &MenuItem{
+func NewMenuItem(title string, opts ...MenuItemOption) *menuItem {
+	item := &menuItem{
 		id:    atomic.AddUint32(&currentID, 1),
 		title: title,
 	}
@@ -144,70 +143,70 @@ func NewMenuItem(title string, opts ...MenuItemOption) *MenuItem {
 }
 
 // SetTitle set the text to display on a menu item
-func (item *MenuItem) SetTitle(title string) {
+func (item *menuItem) SetTitle(title string) {
 	item.title = title
 	item.update()
 }
 
 // SetTooltip set the tooltip to show when mouse hover
-func (item *MenuItem) SetTooltip(tooltip string) {
+func (item *menuItem) SetTooltip(tooltip string) {
 	item.tooltip = tooltip
 	item.update()
 }
 
 // IsDisabled checks if the menu item is disabled
-func (item *MenuItem) IsDisabled() bool {
+func (item *menuItem) IsDisabled() bool {
 	return item.disabled
 }
 
 // Enable a menu item regardless if it's previously enabled or not
-func (item *MenuItem) Enable() {
+func (item *menuItem) Enable() {
 	item.disabled = false
 	item.update()
 }
 
 // Disable a menu item regardless if it's previously disabled or not
-func (item *MenuItem) Disable() {
+func (item *menuItem) Disable() {
 	item.disabled = true
 	item.update()
 }
 
 // Hide hides a menu item
-func (item *MenuItem) Hide() {
+func (item *menuItem) Hide() {
 	hideMenuItem(item)
 }
 
 // Show shows a previously hidden menu item
-func (item *MenuItem) Show() {
+func (item *menuItem) Show() {
 	showMenuItem(item)
 }
 
 // IsChecked returns if the menu item has a check mark
-func (item *MenuItem) IsChecked() bool {
+func (item *menuItem) IsChecked() bool {
 	return item.checked
 }
 
 // Check a menu item regardless if it's previously checked or not
-func (item *MenuItem) Check() {
+func (item *menuItem) Check() {
 	item.checked = true
 	item.update()
 }
 
 // Uncheck a menu item regardless if it's previously unchecked or not
-func (item *MenuItem) Uncheck() {
+func (item *menuItem) Uncheck() {
 	item.checked = false
 	item.update()
 }
 
 // update propagates changes on a menu item to systray
-func (item *MenuItem) update() {
+func (item *menuItem) update() {
 	menuItems.LoadOrStore(item.id, item)
 	addOrUpdateMenuItem(item)
 }
 
 func systrayMenuItemSelected(id uint32) {
 	if v, ok := menuItems.Load(id); ok {
-		if item, ok := v.(*MenuItem); ok {
+		if item, ok := v.(*menuItem); ok {
 			if item.onClicked != nil {
 				item.onClicked()
 			}
