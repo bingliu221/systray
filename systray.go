@@ -66,14 +66,8 @@ func Run(onReady func(), onExit func()) {
 // this does exactly the same as Run().
 func Register(onReady func(), onExit func()) {
 	if onReady != nil {
-		// Run onReady on separate goroutine to avoid blocking event loop
-		readyCh := make(chan interface{})
-		go func() {
-			<-readyCh
-			onReady()
-		}()
 		systrayReady = func() {
-			close(readyCh)
+			go onReady()
 		}
 	}
 
