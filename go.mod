@@ -1,4 +1,4 @@
-module github.com/bingliu221/systray
+module github.com/bingliu221/systray/v2
 
 go 1.18
 
