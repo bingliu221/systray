@@ -42,39 +42,39 @@ func TestBaseWindowsTray(t *testing.T) {
 		t.Errorf("SetIcon failed: %s", err)
 	}
 
-	var id int32 = 0
-	err := wt.addOrUpdateMenuItem(atomic.AddInt32(&id, 1), "Simple enabled", false, false)
+	var id uint32 = 0
+	err := wt.addOrUpdateMenuItem(atomic.AddUint32(&id, 1), 0, "Simple enabled", false, false)
 	if err != nil {
 		t.Errorf("mergeMenuItem failed: %s", err)
 	}
-	err = wt.addOrUpdateMenuItem(atomic.AddInt32(&id, 1), "Simple disabled", true, false)
+	err = wt.addOrUpdateMenuItem(atomic.AddUint32(&id, 1), 0, "Simple disabled", true, false)
 	if err != nil {
 		t.Errorf("mergeMenuItem failed: %s", err)
 	}
-	err = wt.addSeparatorMenuItem(atomic.AddInt32(&id, 1))
+	err = wt.addSeparatorMenuItem(atomic.AddUint32(&id, 1), 0)
 	if err != nil {
 		t.Errorf("addSeparatorMenuItem failed: %s", err)
 	}
-	err = wt.addOrUpdateMenuItem(atomic.AddInt32(&id, 1), "Simple checked enabled", false, true)
+	err = wt.addOrUpdateMenuItem(atomic.AddUint32(&id, 1), 0, "Simple checked enabled", false, true)
 	if err != nil {
 		t.Errorf("mergeMenuItem failed: %s", err)
 	}
-	err = wt.addOrUpdateMenuItem(atomic.AddInt32(&id, 1), "Simple checked disabled", true, true)
+	err = wt.addOrUpdateMenuItem(atomic.AddUint32(&id, 1), 0, "Simple checked disabled", true, true)
 	if err != nil {
 		t.Errorf("mergeMenuItem failed: %s", err)
 	}
 
-	err = wt.hideMenuItem(1)
+	err = wt.hideMenuItem(1, 0)
 	if err != nil {
 		t.Errorf("hideMenuItem failed: %s", err)
 	}
 
-	err = wt.hideMenuItem(100)
+	err = wt.hideMenuItem(100, 0)
 	if err == nil {
 		t.Error("hideMenuItem failed: must return error on invalid item id")
 	}
 
-	err = wt.addOrUpdateMenuItem(2, "Simple disabled update", true, false)
+	err = wt.addOrUpdateMenuItem(2, 0, "Simple disabled update", true, false)
 	if err != nil {
 		t.Errorf("mergeMenuItem failed: %s", err)
 	}
@@ -112,15 +112,16 @@ func TestWindowsRun(t *testing.T) {
 		SetIcon(b)
 		SetTitle("Test title с кириллицей")
 
-		bSomeBtn := AddMenuItem("Йа кнопко", "")
+		bSomeBtn := NewMenuItem("Йа кнопко")
 		bSomeBtn.Check()
-		AddSeparator()
-		bQuit := AddMenuItem("Quit", "Quit the whole app")
-		go func() {
-			<-bQuit.ClickedCh
-			t.Log("Quit reqested")
-			Quit()
-		}()
+		NewSeparator()
+		NewMenuItem("Quit",
+			WithTooltip("Quit the whole app"),
+			WithOnClickedFunc(func() {
+				t.Log("Quit reqested")
+				Quit()
+			}),
+		)
 		time.AfterFunc(1*time.Second, Quit)
 	}
 
